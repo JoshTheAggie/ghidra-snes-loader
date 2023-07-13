@@ -10,8 +10,11 @@ import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.app.util.opinion.Loader;
 import ghidra.app.util.opinion.LoaderTier;
+import ghidra.app.util.opinion.Loaded;
+import ghidra.app.util.opinion.LoadException;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.lang.Language;
@@ -100,17 +103,16 @@ public class SnesLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor) {
-		return false;
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		List<Program> programs = new ArrayList<Program>();
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolder, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, LoadException, CancelledException {
+		List<Loaded<Program>> programs = new ArrayList<>();
 		Collection<RomInfo> detectedRomKinds = detectRomKind(provider);
 		if (detectedRomKinds.size() == 0) {
 			// Weird but ok.
@@ -144,7 +146,7 @@ public class SnesLoader extends AbstractProgramLoader {
 		RomInfo romInfo = detectedRomKinds.iterator().next();
 		boolean success = loadWithTransaction(provider, loadSpec, options, log, prog, monitor, romInfo);
 		if (success) {
-			programs.add(prog);
+			programs.add(new Loaded<Program>(prog, programName, programFolder));
 		}
 
 		return programs;
